@@ -227,4 +227,4 @@ python __main__.py --check specs/MySpec.tla --target .
 
 ## License
 
-MIT
+Apache 2.0
