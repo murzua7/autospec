@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# TLC artifacts
+*_TTrace_*
+states/
+
+# Dependencies
+lib/tla2tools.jar
+
+# Run artifacts
+results.tsv
+traces/
+
+# Secrets
+.env
+*.key
+
+# OS
+.DS_Store
+Thumbs.db

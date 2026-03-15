@@ -1,0 +1,21 @@
+[project]
+name = "autospec"
+version = "0.1.0"
+description = "Self-supervising TLA+ formal verification loop, modeled after Karpathy's autoresearch"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.40.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+]
+
+[project.scripts]
+autospec = "autospec.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
