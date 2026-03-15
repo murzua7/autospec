@@ -578,6 +578,13 @@ def run_loop(
             print("  ⚠ Nothing to commit (no changes detected).")
 
         # Run TLC (FIXED EVALUATOR)
+        # Second integrity check: verify evaluator right before the trust boundary.
+        # TLC found (IntegrityCheck spec) that a gap between apply_changes() and
+        # evaluate_all_specs() could allow a compromised evaluator to run.
+        if not verify_evaluator_integrity():
+            revert_last_commit()
+            print("  Integrity violation detected before evaluation. Aborting.")
+            break
         print("  Running TLC model checker...")
         current_violations, results = evaluate_all_specs()
 
