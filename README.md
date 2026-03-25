@@ -70,18 +70,29 @@ git clone https://github.com/murzua7/autospec.git
 cd autospec
 
 # Install
-pip install anthropic   # or: pip install -e .
+pip install -e .
 
 # TLC downloads automatically on first run (requires Java 11+)
 java -version
 
 # Run TLC on the example spec (no API key needed)
-python __main__.py --check specs/BankTransfer.tla --target target/example
+python -m autospec --check specs/BankTransfer.tla
 
-# Run the full self-supervising loop on your codebase
-export ANTHROPIC_API_KEY=sk-ant-...
-python __main__.py --target /path/to/your/code --max-iters 100
+# Run the full loop (queue mode — no API key needed, works with Claude Code Max)
+python -m autospec --target /path/to/your/code --max-iters 100
+
+# Or with direct API mode (requires credits)
+python -m autospec --target /path/to/your/code --mode api
 ```
+
+### Agent Modes
+
+| Mode | Flag | Requires | How it works |
+|------|------|----------|-------------|
+| **Queue** (default) | `--mode queue` | A separate LLM process (e.g. Claude Code) | Writes prompts to `llm_queue/requests/`, polls for responses in `llm_queue/responses/` |
+| **API** | `--mode api` | `ANTHROPIC_API_KEY` with credits | Direct Anthropic API call each iteration |
+
+Queue mode is the default because it works with Claude Code Max subscriptions (no API credits needed). A separate Claude Code session or any LLM process reads the queue and writes responses.
 
 ## What TLC Finds (That Tests Can't)
 
@@ -153,16 +164,30 @@ autospec/
 ├── program.md          # Agent strategy document (TLA+ guidelines + heuristics)
 ├── __main__.py         # CLI entry point
 ├── specs/              # TLA+ specifications (agent-mutable)
-│   ├── BankTransfer.tla/.cfg      # Example: concurrent race condition
 │   ├── AcceptRejectGate.tla/.cfg  # Self-spec: loop logic
 │   ├── FileSandbox.tla/.cfg       # Self-spec: security sandbox
-│   └── IntegrityCheck.tla/.cfg    # Self-spec: evaluator integrity
+│   ├── IntegrityCheck.tla/.cfg    # Self-spec: evaluator integrity
+│   └── BankTransfer.tla/.cfg      # Example: concurrent race condition
 ├── target/             # Target codebase (agent-mutable for fixes)
-├── mappings/           # Code ↔ Spec correspondence
+├── mappings/           # Code ↔ Spec correspondence (auto-cleaned on target change)
 ├── traces/             # Saved counterexample traces
-├── tests/              # 29 tests (unit + integration + security)
+├── llm_queue/          # File-based agent queue (queue mode)
+│   ├── requests/       #   Loop writes prompts here
+│   └── responses/      #   External LLM writes responses here
+├── tests/              # Unit + integration + security tests
 └── lib/                # tla2tools.jar (auto-downloaded)
 ```
+
+### Target Change Detection
+
+When you point autospec at a new target, it detects the change by comparing the module mapping against the new codebase. If there's no overlap, it automatically cleans stale specs, traces, results, and queue files so old violations don't pollute the new run.
+
+### Agent Capabilities
+
+The agent can:
+- **Write** specs and code fixes via the `"files"` dict
+- **Delete** obsolete specs via `"delete_specs": ["OldSpec.tla"]` (removes `.tla`, `.cfg`, and trace files)
+- **Classify** actions as `NEW_SPEC`, `SPEC_REFINE`, `BUG_FIX`, or `ABSTRACTION`
 
 ### Security Model (3 Layers)
 
@@ -187,26 +212,32 @@ All three layers are **formally verified** by TLC (see `specs/FileSandbox.tla` a
 ## Configuration
 
 ```bash
-# Basic usage
-python __main__.py --target ./my-project
+# Basic usage (queue mode, no API key needed)
+python -m autospec --target ./my-project
 
 # Full options
-python __main__.py \
-  --target ./my-project \        # Codebase to verify
-  --model claude-opus-4-20250514 \   # LLM model for the agent
-  --max-iters 500 \             # Maximum loop iterations
-  --tag overnight-run            # Git branch tag
+python -m autospec \
+  --target ./my-project \            # Codebase to verify
+  --mode api \                       # Use direct API (default: queue)
+  --model claude-opus-4-20250514 \   # LLM model (api mode only)
+  --max-iters 500 \                  # Maximum loop iterations
+  --tag overnight-run                # Git branch tag
 
 # Direct TLC check (no agent, no API key needed)
-python __main__.py --check specs/MySpec.tla --target .
+python -m autospec --check specs/MySpec.tla
 ```
 
 ## Requirements
 
 - Python 3.10+
 - Java 11+ (for TLC model checker — `tla2tools.jar` auto-downloads)
-- `anthropic` Python package (for the agent loop)
 - Git
+- For **queue mode** (default): an external LLM process (e.g. Claude Code)
+- For **api mode**: `anthropic` Python package + `ANTHROPIC_API_KEY`
+
+### Windows
+
+autospec works on Windows (Git Bash / MSYS2). MSYS-style paths (`/c/Users/...`) are automatically normalized to native Windows paths.
 
 ## How It Compares
 
