@@ -54,6 +54,13 @@ def main() -> None:
         help="Optional tag for the git branch name",
     )
     parser.add_argument(
+        "--mode",
+        type=str,
+        default="queue",
+        choices=["queue", "api"],
+        help="Agent mode: 'queue' (file-based, no API needed, default) or 'api' (direct Anthropic API)",
+    )
+    parser.add_argument(
         "--check",
         type=str,
         default=None,
@@ -83,6 +90,7 @@ def main() -> None:
         **kwargs,
         max_iterations=args.max_iters,
         tag=args.tag,
+        mode=args.mode,
     )
 
 

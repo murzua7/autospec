@@ -1,14 +1,14 @@
 """
-autospec — Self-Supervising Formal Verification Loop
+autospec -- Self-Supervising Formal Verification Loop
 
 The main orchestrator, analogous to the agentic loop in Karpathy's autoresearch.
 An LLM agent iteratively writes TLA+ specs and fixes code, using the TLC model
 checker as a fixed evaluator that cannot be gamed.
 
 Architecture:
-  program.md   → strategy document (human-curated, guides the agent)
-  prepare.py   → IMMUTABLE evaluator (TLC harness, result parser)
-  autospec.py  → THIS FILE: loop orchestrator + agent integration
+  program.md   -> strategy document (human-curated, guides the agent)
+  prepare.py   -> IMMUTABLE evaluator (TLC harness, result parser)
+  autospec.py  -> THIS FILE: loop orchestrator + agent integration
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ from prepare import (
     self_hash,
 )
 
-# ── Configuration ──────────────────────────────────────────────────────
+# -- Configuration ------------------------------------------------------
 
 ROOT = Path(__file__).resolve().parent
 SPECS_DIR = ROOT / "specs"
@@ -51,17 +51,22 @@ MAX_AGENT_TOKENS = 16384
 BRANCH_PREFIX = "autospec"
 DEFAULT_MODEL = "claude-sonnet-4-20250514"
 
+# File-queue directories for manual/Claude Code mode
+QUEUE_DIR = ROOT / "llm_queue"
+QUEUE_REQUESTS = QUEUE_DIR / "requests"
+QUEUE_RESPONSES = QUEUE_DIR / "responses"
+
 # Sentinel for "no baseline established yet" (avoids float/int mixing)
 _NO_BASELINE = -1
 
-# Record prepare.py hash at import time — verified each iteration
+# Record prepare.py hash at import time -- verified each iteration
 _PREPARE_HASH = self_hash()
 
 
-# ── Mapping Management ─────────────────────────────────────────────────
+# -- Mapping Management -------------------------------------------------
 
 def load_mapping() -> dict[str, Any]:
-    """Load the code→spec mapping from mappings/mapping.json."""
+    """Load the code->spec mapping from mappings/mapping.json."""
     path = MAPPINGS_DIR / "mapping.json"
     if path.exists():
         return json.loads(path.read_text())
@@ -87,7 +92,7 @@ def get_target_files(target_dir: Path) -> list[Path]:
     ]
 
 
-# ── Context Gathering ──────────────────────────────────────────────────
+# -- Context Gathering --------------------------------------------------
 
 def gather_context(
     target_dir: Path,
@@ -161,7 +166,7 @@ def load_previous_results() -> list[str]:
     return []
 
 
-# ── Agent Integration ──────────────────────────────────────────────────
+# -- Agent Integration --------------------------------------------------
 
 def build_system_prompt() -> str:
     """Build the system prompt from program.md."""
@@ -206,15 +211,18 @@ def call_agent(
     context: str,
     tlc_feedback: str | None,
     model: str = DEFAULT_MODEL,
+    mode: str = "queue",
 ) -> dict[str, Any]:
     """
     Call the LLM agent with context and TLC feedback.
     Returns parsed JSON with the agent's actions.
+
+    Modes:
+      - "queue": File-based queue (default). Writes prompt to llm_queue/requests/,
+        waits for response in llm_queue/responses/. Works with Claude Code Max
+        or any external LLM process.
+      - "api": Direct Anthropic API call (requires ANTHROPIC_API_KEY with credits).
     """
-    client = anthropic.Anthropic()
-
-    messages: list[dict[str, str]] = []
-
     user_content = "## Current State\n\n" + context
     if tlc_feedback:
         user_content += "\n\n## TLC Feedback From Last Iteration\n\n" + tlc_feedback
@@ -226,23 +234,95 @@ def call_agent(
             "state machine and add a TypeOK invariant."
         )
 
-    messages.append({"role": "user", "content": user_content})
+    system_prompt = build_system_prompt()
+
+    if mode == "api":
+        return _call_agent_api(system_prompt, user_content, model)
+    else:
+        return _call_agent_queue(system_prompt, user_content)
+
+
+def _call_agent_api(
+    system_prompt: str,
+    user_content: str,
+    model: str,
+) -> dict[str, Any]:
+    """Direct Anthropic API call (requires credits)."""
+    client = anthropic.Anthropic()
+
+    messages = [{"role": "user", "content": user_content}]
 
     response = client.messages.create(
         model=model,
         max_tokens=MAX_AGENT_TOKENS,
-        system=build_system_prompt(),
+        system=system_prompt,
         messages=messages,
     )
 
-    # Extract text content
     text = ""
     for block in response.content:
         if block.type == "text":
             text += block.text
 
-    # Parse JSON from response (may be wrapped in ```json...```)
     return _parse_agent_response(text)
+
+
+def _call_agent_queue(
+    system_prompt: str,
+    user_content: str,
+    timeout: int = 600,
+    poll_interval: float = 2.0,
+) -> dict[str, Any]:
+    """File-queue mode: write prompt, wait for response.
+
+    A separate process (Claude Code session, Ollama script, etc.) reads
+    from llm_queue/requests/ and writes to llm_queue/responses/.
+    """
+    import uuid as _uuid
+
+    QUEUE_REQUESTS.mkdir(parents=True, exist_ok=True)
+    QUEUE_RESPONSES.mkdir(parents=True, exist_ok=True)
+
+    request_id = str(_uuid.uuid4())[:12]
+    request_file = QUEUE_REQUESTS / f"{request_id}.json"
+    response_file = QUEUE_RESPONSES / f"{request_id}.json"
+
+    # Write request
+    request_data = {
+        "id": request_id,
+        "system": system_prompt,
+        "user": user_content,
+        "timestamp": datetime.now().isoformat(),
+    }
+    request_file.write_text(json.dumps(request_data, indent=2), encoding="utf-8")
+    print(f"  [queue] Request written: {request_file.name}")
+    print(f"  [queue] Waiting for response at: {response_file.name}")
+    print(f"  [queue] (Run /autospec-respond or process the queue externally)")
+
+    # Poll for response
+    elapsed = 0.0
+    while elapsed < timeout:
+        if response_file.exists():
+            try:
+                text = response_file.read_text(encoding="utf-8")
+                result = _parse_agent_response(text)
+                # Clean up
+                request_file.unlink(missing_ok=True)
+                response_file.unlink(missing_ok=True)
+                return result
+            except (json.JSONDecodeError, ValueError):
+                # Partial write, wait more
+                pass
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+        if int(elapsed) % 30 == 0 and elapsed > 0:
+            print(f"  [queue] Still waiting... ({int(elapsed)}s)")
+
+    # Timeout
+    request_file.unlink(missing_ok=True)
+    raise TimeoutError(
+        f"No response after {timeout}s. Ensure a queue processor is running."
+    )
 
 
 def _parse_agent_response(text: str) -> dict[str, Any]:
@@ -285,7 +365,7 @@ def _parse_agent_response(text: str) -> dict[str, Any]:
     }
 
 
-# ── File Application ───────────────────────────────────────────────────
+# -- File Application ---------------------------------------------------
 
 def apply_changes(agent_output: dict[str, Any]) -> list[str]:
     """
@@ -329,7 +409,7 @@ def apply_changes(agent_output: dict[str, Any]) -> list[str]:
     return files_written
 
 
-# ── Git Operations ─────────────────────────────────────────────────────
+# -- Git Operations -----------------------------------------------------
 
 def git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     """Run a git command in the project root."""
@@ -376,7 +456,7 @@ def revert_last_commit() -> None:
     git("reset", "--hard", "HEAD~1")
 
 
-# ── TLC Evaluation ─────────────────────────────────────────────────────
+# -- TLC Evaluation -----------------------------------------------------
 
 def evaluate_all_specs() -> tuple[int, list[TLCResult]]:
     """
@@ -406,7 +486,7 @@ def evaluate_all_specs() -> tuple[int, list[TLCResult]]:
             result = TLCResult(
                 spec_file=str(tla_file),
                 config_file=str(cfg_file),
-                error_message="Config declares no INVARIANT or PROPERTY — trivial spec rejected",
+                error_message="Config declares no INVARIANT or PROPERTY -- trivial spec rejected",
             )
             results.append(result)
             continue
@@ -424,28 +504,29 @@ def evaluate_all_specs() -> tuple[int, list[TLCResult]]:
     return total_violations, results
 
 
-# ── Integrity Check ────────────────────────────────────────────────────
+# -- Integrity Check ----------------------------------------------------
 
 def verify_evaluator_integrity() -> bool:
     """Verify prepare.py hasn't been modified since autospec started."""
     current = self_hash()
     if current != _PREPARE_HASH:
-        print("╔══════════════════════════════════════════════╗")
-        print("║  ⚠ INTEGRITY VIOLATION: prepare.py modified  ║")
-        print("║  The fixed evaluator has been tampered with.  ║")
-        print("║  Aborting to prevent reward hacking.          ║")
-        print("╚══════════════════════════════════════════════╝")
+        print("==================================================")
+        print("|  ! INTEGRITY VIOLATION: prepare.py modified  |")
+        print("|  The fixed evaluator has been tampered with.  |")
+        print("|  Aborting to prevent reward hacking.          |")
+        print("==================================================")
         return False
     return True
 
 
-# ── Main Loop ──────────────────────────────────────────────────────────
+# -- Main Loop ----------------------------------------------------------
 
 def run_loop(
     target_dir: str | Path,
     model: str = DEFAULT_MODEL,
     max_iterations: int = MAX_ITERATIONS,
     tag: str = "",
+    mode: str = "queue",
 ) -> None:
     """
     The autoresearch-style self-supervising loop.
@@ -462,12 +543,13 @@ def run_loop(
         print(f"Error: target directory not found: {target_dir}")
         sys.exit(1)
 
-    print("╔══════════════════════════════════════════════╗")
-    print("║        autospec — Formal Verification        ║")
-    print("║     Self-Supervising TLA+ Verification Loop   ║")
-    print("╚══════════════════════════════════════════════╝")
+    print("=" * 50)
+    print("  autospec -- Formal Verification")
+    print("  Self-Supervising TLA+ Verification Loop")
+    print("=" * 50)
     print(f"  Target:     {target_dir}")
-    print(f"  Model:      {model}")
+    print(f"  Mode:       {mode}")
+    print(f"  Model:      {model if mode == 'api' else 'N/A (queue mode)'}")
     print(f"  Max iters:  {max_iterations}")
     print(f"  Evaluator:  prepare.py (SHA256: {_PREPARE_HASH[:16]}...)")
     print()
@@ -499,13 +581,13 @@ def run_loop(
         save_mapping(mapping)
 
     # Baseline evaluation
-    print("\n── Baseline Evaluation ──")
+    print("\n-- Baseline Evaluation --")
     best_violations, baseline_results = evaluate_all_specs()
     if baseline_results:
         for r in baseline_results:
             print(format_result_for_agent(r))
     else:
-        print("  No specs yet — agent will create the first one.")
+        print("  No specs yet -- agent will create the first one.")
         best_violations = _NO_BASELINE
 
     # Log baseline
@@ -518,16 +600,16 @@ def run_loop(
     with open(RESULTS_FILE, "a") as f:
         f.write(baseline_tsv + "\n")
 
-    # ── Main Loop ──────────────────────────────────────────────────
+    # -- Main Loop --------------------------------------------------
     tlc_feedback: str | None = None
     focus_module: str | None = None
     consecutive_errors = 0
 
     for iteration in range(1, max_iterations + 1):
-        print(f"\n{'━' * 60}")
+        print(f"\n{'-' * 60}")
         print(f"  Iteration {iteration}/{max_iterations}")
         print(f"  Best violations: {best_violations}")
-        print(f"{'━' * 60}")
+        print(f"{'-' * 60}")
 
         # Integrity check
         if not verify_evaluator_integrity():
@@ -547,9 +629,9 @@ def run_loop(
         # Call agent
         print("  Calling agent...")
         try:
-            agent_output = call_agent(context, tlc_feedback, model=model)
+            agent_output = call_agent(context, tlc_feedback, model=model, mode=mode)
         except Exception as e:
-            print(f"  ⚠ Agent error: {e}")
+            print(f"  ! Agent error: {e}")
             consecutive_errors += 1
             if consecutive_errors >= 3:
                 print("  Too many consecutive agent errors. Stopping.")
@@ -567,7 +649,7 @@ def run_loop(
         # Apply changes
         files_written = apply_changes(agent_output)
         if not files_written:
-            print("  ⚠ Agent produced no file changes. Continuing.")
+            print("  ! Agent produced no file changes. Continuing.")
             tlc_feedback = "You produced no file changes. Please write a TLA+ spec."
             continue
 
@@ -575,7 +657,7 @@ def run_loop(
         commit_msg = f"autospec iter {iteration} [{classification}]: {summary}"
         committed = commit_changes(commit_msg, files_written)
         if not committed:
-            print("  ⚠ Nothing to commit (no changes detected).")
+            print("  ! Nothing to commit (no changes detected).")
 
         # Run TLC (FIXED EVALUATOR)
         # Second integrity check: verify evaluator right before the trust boundary.
@@ -596,7 +678,7 @@ def run_loop(
 
         # Print results
         for r in results:
-            status = "PASS ✓" if r.passed else f"FAIL ✗ ({r.violation_count} violations)"
+            status = "PASS OK" if r.passed else f"FAIL FAIL ({r.violation_count} violations)"
             print(f"  {Path(r.spec_file).name}: {status} "
                   f"({r.distinct_states} states, {r.time_seconds:.1f}s)")
 
@@ -615,34 +697,34 @@ def run_loop(
                     ]
                     trace_file.write_text(json.dumps(trace_data, indent=2))
 
-        # ── Accept / Reject Gate ──────────────────────────────────
+        # -- Accept / Reject Gate ----------------------------------
         if current_violations == 0 and results:
-            # Perfect score — all specs pass
+            # Perfect score -- all specs pass
             action = "CLEAN"
-            print(f"  ★ ZERO VIOLATIONS — all specs verified!")
+            print(f"  * ZERO VIOLATIONS -- all specs verified!")
             best_violations = 0
 
         elif best_violations == _NO_BASELINE:
-            # First spec ever — always accept
+            # First spec ever -- always accept
             action = "FIRST"
             best_violations = current_violations
             print(f"  First spec: {current_violations} violations (baseline set)")
 
         elif current_violations < best_violations:
-            # Improvement — keep
+            # Improvement -- keep
             action = "KEEP"
-            print(f"  ✓ Improved: {best_violations} → {current_violations} violations")
+            print(f"  OK Improved: {best_violations} -> {current_violations} violations")
             best_violations = current_violations
 
         elif current_violations == best_violations:
-            # No change — keep (spec might have been refined without changing count)
+            # No change -- keep (spec might have been refined without changing count)
             action = "KEEP_EQUAL"
-            print(f"  ≈ No change: {current_violations} violations")
+            print(f"  ~ No change: {current_violations} violations")
 
         else:
-            # Regression — revert
+            # Regression -- revert
             action = "DISCARD"
-            print(f"  ✗ Regressed: {best_violations} → {current_violations} violations")
+            print(f"  FAIL Regressed: {best_violations} -> {current_violations} violations")
             print(f"    Reverting commit...")
             if committed:
                 revert_last_commit()
@@ -670,15 +752,15 @@ def run_loop(
             for m in mapping.get("modules", [])
         )
         if all_verified and mapping.get("modules"):
-            print("\n╔══════════════════════════════════════════════╗")
-            print("║  ★ ALL MODULES VERIFIED — autospec complete   ║")
-            print("╚══════════════════════════════════════════════╝")
+            print("\n==================================================")
+            print("|  * ALL MODULES VERIFIED -- autospec complete   |")
+            print("==================================================")
             break
 
     # Final summary
-    print(f"\n{'═' * 60}")
+    print(f"\n{'=' * 60}")
     print(f"  autospec completed after {iteration} iterations")
     print(f"  Final violations: {best_violations}")
     print(f"  Branch: {branch}")
     print(f"  Results: {RESULTS_FILE}")
-    print(f"{'═' * 60}")
+    print(f"{'=' * 60}")

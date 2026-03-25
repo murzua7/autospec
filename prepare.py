@@ -1,7 +1,7 @@
 """
-IMMUTABLE EVALUATOR — The agent must NEVER modify this file.
+IMMUTABLE EVALUATOR -- The agent must NEVER modify this file.
 
-This is the TLC model checker harness — the fixed evaluator in the
+This is the TLC model checker harness -- the fixed evaluator in the
 autospec loop, analogous to prepare.py in Karpathy's autoresearch.
 
 The TLC model checker is mathematically exhaustive: it explores every
@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-# ── Constants ──────────────────────────────────────────────────────────
+# -- Constants ----------------------------------------------------------
 
 ROOT = Path(__file__).resolve().parent
 TLA2TOOLS_JAR = ROOT / "lib" / "tla2tools.jar"
@@ -34,12 +34,12 @@ TLA2TOOLS_URL = (
 DEFAULT_TIMEOUT = 300  # 5 minutes, matching autoresearch's budget
 JAVA_CMD = "java"
 
-# Hash of THIS file — used by autospec.py to verify immutability
+# Hash of THIS file -- used by autospec.py to verify immutability
 def self_hash() -> str:
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
-# ── Data Structures ────────────────────────────────────────────────────
+# -- Data Structures ----------------------------------------------------
 
 @dataclass
 class TraceStep:
@@ -101,14 +101,14 @@ class SpecQuality:
     trace_max_depth: int         # Longest counterexample trace
 
 
-# ── TLC Runner ─────────────────────────────────────────────────────────
+# -- TLC Runner ---------------------------------------------------------
 
 def ensure_tlc() -> Path:
     """Download tla2tools.jar if not present. Returns path to jar."""
     if TLA2TOOLS_JAR.exists():
         return TLA2TOOLS_JAR
     TLA2TOOLS_JAR.parent.mkdir(parents=True, exist_ok=True)
-    print(f"[prepare] Downloading tla2tools.jar → {TLA2TOOLS_JAR}")
+    print(f"[prepare] Downloading tla2tools.jar -> {TLA2TOOLS_JAR}")
     urllib.request.urlretrieve(TLA2TOOLS_URL, TLA2TOOLS_JAR)
     print(f"[prepare] Downloaded ({TLA2TOOLS_JAR.stat().st_size / 1e6:.1f} MB)")
     return TLA2TOOLS_JAR
@@ -136,7 +136,7 @@ def run_tlc(
     """
     Run the TLC model checker on a TLA+ specification.
 
-    This is the FIXED EVALUATOR — like val_bpb in autoresearch.
+    This is the FIXED EVALUATOR -- like val_bpb in autoresearch.
     It explores the entire reachable state space and returns structured
     results including counterexample traces for every violation.
 
@@ -177,7 +177,7 @@ def run_tlc(
             error_message="Java not found. TLC requires a JRE.",
         )
 
-    # Build command — use filenames only since we cwd to spec_path.parent
+    # Build command -- use filenames only since we cwd to spec_path.parent
     # TLC requires the module name to match the filename, so we must run
     # from the spec's directory and pass just the filename.
     jvm = jvm_args or ["-XX:+UseParallelGC", "-Xmx4g"]
@@ -227,7 +227,7 @@ def run_tlc(
         )
 
 
-# ── TLC Output Parser ─────────────────────────────────────────────────
+# -- TLC Output Parser -------------------------------------------------
 
 def parse_tlc_output(
     raw: str, spec_file: str, config_file: str
@@ -243,7 +243,7 @@ def parse_tlc_output(
     """
     result = TLCResult(spec_file=spec_file, config_file=config_file, raw_output=raw)
 
-    # ── Check for parse/syntax errors ──
+    # -- Check for parse/syntax errors --
     parse_error_patterns = [
         r"^\*\*\* Errors?: (.+)$",
         r"^Semantic error[s]?.*:\s*(.+)$",
@@ -257,7 +257,7 @@ def parse_tlc_output(
         for match in re.finditer(pattern, raw, re.MULTILINE):
             result.parse_errors.append(match.group(0).strip())
 
-    # ── Extract state statistics ──
+    # -- Extract state statistics --
     m = re.search(
         r"(\d+)\s+states\s+generated,\s+(\d+)\s+distinct\s+states\s+found",
         raw,
@@ -270,7 +270,7 @@ def parse_tlc_output(
     if m:
         result.queue_size = int(m.group(1))
 
-    # ── Detect violations ──
+    # -- Detect violations --
     violations: list[Violation] = []
 
     # Invariant violations
@@ -320,7 +320,7 @@ def parse_tlc_output(
         violations.append(v)
         result.liveness_failures += 1
 
-    # ── Parse counterexample traces ──
+    # -- Parse counterexample traces --
     # TLC outputs traces as:
     # State 1: <Initial predicate>
     # /\ var1 = value1
@@ -344,7 +344,7 @@ def parse_tlc_output(
             variables=variables,
         )
         if step_num == 1 and current_trace:
-            # New trace starts — assign previous trace to last violation
+            # New trace starts -- assign previous trace to last violation
             _assign_trace(violations, current_trace)
             current_trace = []
         current_trace.append(step)
@@ -371,7 +371,7 @@ def _assign_trace(violations: list[Violation], trace: list[TraceStep]) -> None:
             return
 
 
-# ── Quality Evaluation ─────────────────────────────────────────────────
+# -- Quality Evaluation -------------------------------------------------
 
 def evaluate_spec_quality(result: TLCResult, spec_path: str | Path) -> SpecQuality:
     """
@@ -416,12 +416,12 @@ def evaluate_spec_quality(result: TLCResult, spec_path: str | Path) -> SpecQuali
     )
 
 
-# ── Result Formatting ──────────────────────────────────────────────────
+# -- Result Formatting --------------------------------------------------
 
 def format_result_for_agent(result: TLCResult) -> str:
     """
     Format TLCResult as structured text for the LLM agent.
-    This is the feedback signal — much richer than a scalar.
+    This is the feedback signal -- much richer than a scalar.
     """
     lines: list[str] = []
     lines.append("=" * 60)
@@ -429,14 +429,14 @@ def format_result_for_agent(result: TLCResult) -> str:
     lines.append("=" * 60)
 
     if result.error_message:
-        lines.append(f"\n⚠ ERROR: {result.error_message}")
+        lines.append(f"\n! ERROR: {result.error_message}")
 
     if result.parse_errors:
-        lines.append(f"\n⚠ PARSE ERRORS ({len(result.parse_errors)}):")
+        lines.append(f"\n! PARSE ERRORS ({len(result.parse_errors)}):")
         for e in result.parse_errors:
-            lines.append(f"  • {e}")
+            lines.append(f"  * {e}")
 
-    lines.append(f"\nPassed: {'YES ✓' if result.passed else 'NO ✗'}")
+    lines.append(f"\nPassed: {'YES OK' if result.passed else 'NO FAIL'}")
     lines.append(f"Violations: {result.violation_count}")
     lines.append(f"  Invariant: {result.invariant_violations}")
     lines.append(f"  Deadlock:  {result.deadlocks}")
@@ -446,7 +446,7 @@ def format_result_for_agent(result: TLCResult) -> str:
     lines.append(f"Time: {result.time_seconds:.1f}s")
 
     for i, v in enumerate(result.violations, 1):
-        lines.append(f"\n{'─' * 40}")
+        lines.append(f"\n{'-' * 40}")
         lines.append(f"VIOLATION {i}: [{v.violation_type.upper()}] {v.property_name}")
         if v.raw_message:
             lines.append(f"  Message: {v.raw_message}")
@@ -490,7 +490,7 @@ TSV_HEADER = (
 )
 
 
-# ── CLI for direct usage ───────────────────────────────────────────────
+# -- CLI for direct usage -----------------------------------------------
 
 def main() -> None:
     """Run TLC on a spec and print results. Usage: python prepare.py check <spec.tla>"""
