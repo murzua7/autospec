@@ -2,8 +2,11 @@
 (******************************************************************)
 (* TLA+ specification of ontograph KnowledgeGraph invariants.     *)
 (* Models adding entities and relations with type constraints.    *)
+(*                                                                *)
+(* Entities: set of <<name, type>> pairs                          *)
+(* Relations: set of <<source, target, rel_type>> triples         *)
 (******************************************************************)
-EXTENDS Naturals, FiniteSets, TLC
+EXTENDS Naturals, FiniteSets
 
 CONSTANTS
     EntityTypes,
@@ -18,53 +21,51 @@ VARIABLES
 
 vars == <<entities, relations>>
 
-(* Type invariant *)
-TypeOK ==
-    /\ \A name \in DOMAIN entities: entities[name] \in EntityTypes
-    /\ \A r \in relations:
-        /\ r[1] \in STRING
-        /\ r[2] \in STRING
-        /\ r[3] \in RelationTypes
+\* Helper: extract entity names from the entity set
+Names == {e[1] : e \in entities}
 
-(* No self-loops: source != target *)
+(* ---- Invariants ---- *)
+
+TypeOK ==
+    /\ entities \subseteq (EntityNames \X EntityTypes)
+    /\ relations \subseteq (EntityNames \X EntityNames \X RelationTypes)
+
 NoSelfLoops ==
     \A r \in relations: r[1] /= r[2]
 
-(* All relation endpoints reference existing entities *)
 RelationsGrounded ==
     \A r \in relations:
-        /\ r[1] \in DOMAIN entities
-        /\ r[2] \in DOMAIN entities
+        /\ r[1] \in Names
+        /\ r[2] \in Names
 
-(* Entity count bounded *)
+EntityNamesUnique ==
+    \A e1, e2 \in entities:
+        e1[1] = e2[1] => e1 = e2
+
 EntityBounded ==
-    Cardinality(DOMAIN entities) <= MaxEntities
+    Cardinality(entities) <= MaxEntities
 
-(* Relation count bounded *)
 RelationBounded ==
     Cardinality(relations) <= MaxRelations
 
+(* ---- State machine ---- *)
+
 Init ==
-    /\ entities = [x \in {} |-> ""]
+    /\ entities = {}
     /\ relations = {}
 
 AddEntity(name, etype) ==
-    /\ Cardinality(DOMAIN entities) < MaxEntities
+    /\ Cardinality(entities) < MaxEntities
     /\ name \in EntityNames
     /\ etype \in EntityTypes
-    /\ name \notin DOMAIN entities
-    /\ entities' = [x \in (DOMAIN entities \union {name}) |->
-                        IF x = name THEN etype ELSE entities[x]]
+    /\ name \notin Names
+    /\ entities' = entities \union {<<name, etype>>}
     /\ UNCHANGED relations
-
-MergeEntity(name) ==
-    /\ name \in DOMAIN entities
-    /\ UNCHANGED <<entities, relations>>
 
 AddRelation(source, target, rtype) ==
     /\ Cardinality(relations) < MaxRelations
-    /\ source \in DOMAIN entities
-    /\ target \in DOMAIN entities
+    /\ source \in Names
+    /\ target \in Names
     /\ source /= target
     /\ rtype \in RelationTypes
     /\ <<source, target, rtype>> \notin relations
@@ -74,11 +75,9 @@ AddRelation(source, target, rtype) ==
 Next ==
     \/ \E name \in EntityNames, etype \in EntityTypes:
         AddEntity(name, etype)
-    \/ \E name \in EntityNames:
-        MergeEntity(name)
-    \/ \E s \in DOMAIN entities, t \in DOMAIN entities, rt \in RelationTypes:
+    \/ \E s \in Names, t \in Names, rt \in RelationTypes:
         AddRelation(s, t, rt)
 
-Spec == Init /\ [][Next]_vars /\ WF_vars(Next)
+Spec == Init /\ [][Next]_vars
 
 ====

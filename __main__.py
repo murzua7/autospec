@@ -32,7 +32,7 @@ def main() -> None:
     parser.add_argument(
         "--target", "-t",
         type=str,
-        required=True,
+        default=None,
         help="Path to the target codebase to verify",
     )
     parser.add_argument(
@@ -80,6 +80,9 @@ def main() -> None:
               f"{quality.temporal_count} temporal props, "
               f"{quality.spec_lines} lines")
         sys.exit(0 if result.passed else 1)
+
+    if not args.target:
+        parser.error("--target is required when not using --check")
 
     kwargs = {}
     if args.model:
