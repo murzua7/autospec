@@ -78,9 +78,17 @@ def save_mapping(mapping: dict[str, Any]) -> None:
 
 
 def get_target_files(target_dir: Path) -> list[Path]:
-    """Discover Python files in the target directory, sorted by size (smaller first)."""
-    files = sorted(target_dir.rglob("*.py"), key=lambda p: p.stat().st_size)
-    # Filter out __pycache__, .venv, etc.
+    """Discover Python files in the target directory, sorted by size (largest first).
+
+    Largest-first ensures the context gatherer shows substantive modules
+    (simulation.py, config.py) rather than empty __init__.py stubs.
+    """
+    files = sorted(
+        target_dir.rglob("*.py"),
+        key=lambda p: p.stat().st_size,
+        reverse=True,
+    )
+    # Filter out __pycache__, .venv, test files, etc.
     return [
         f for f in files
         if not any(
@@ -128,12 +136,18 @@ def gather_context(
             sections.append(f"### {focus_module}")
             sections.append(f"```python\n{code[:8000]}\n```")
     else:
-        # Show all target files (truncated)
-        for f in get_target_files(target_dir)[:5]:
+        # Show largest target files (skip trivial stubs < 50 bytes)
+        shown = 0
+        for f in get_target_files(target_dir):
+            if shown >= 5:
+                break
+            if f.stat().st_size < 50:
+                continue
             rel = f.relative_to(target_dir)
             code = f.read_text(errors="replace")
             sections.append(f"### {rel}")
             sections.append(f"```python\n{code[:4000]}\n```")
+            shown += 1
 
     # 4. Existing specs
     if current_specs:
@@ -191,6 +205,7 @@ def build_system_prompt() -> str:
                 "specs/ModuleName.cfg": "full config content",
                 "target/example/module.py": "fixed code (only if BUG_FIX)"
             }},
+            "delete_specs": ["OldSpec.tla"],
             "reasoning": "Why you made these changes, what you expect TLC to find",
             "next_focus": "What to focus on next iteration"
         }}
@@ -202,6 +217,7 @@ def build_system_prompt() -> str:
         - NEVER include prepare.py in "files"
         - Spec files go in specs/ directory
         - Code fixes go in the target directory
+        - Use "delete_specs" to remove obsolete specs (both .tla and .cfg are deleted)
     """)
 
 
@@ -374,8 +390,26 @@ def apply_changes(agent_output: dict[str, Any]) -> list[str]:
 
     Security: path traversal prevention + allowlist enforcement.
     The agent can only write to specs/, mappings/, and target/ directories.
+    The agent can request spec deletion via "delete_specs": ["name.tla", ...].
     """
     files_written: list[str] = []
+
+    # Handle spec deletions (agent can only delete from specs/)
+    for name in agent_output.get("delete_specs", []):
+        if "/" in name or "\\" in name or ".." in name:
+            print(f"  BLOCKED: invalid delete_specs name: {name}")
+            continue
+        for ext in ("", ".cfg"):
+            target = SPECS_DIR / (name + ext) if ext else SPECS_DIR / name
+            if target.exists() and target.is_file():
+                target.unlink()
+                print(f"  -> Deleted {target.name}")
+                files_written.append(f"specs/{target.name}")
+        # Also clean any trace files for this spec
+        stem = Path(name).stem
+        for trace in SPECS_DIR.glob(f"{stem}_TTrace_*"):
+            trace.unlink()
+
     files_dict = agent_output.get("files", {})
 
     # Allowed write directories (relative to ROOT)
@@ -570,6 +604,29 @@ def run_loop(
 
     SPECS_DIR.mkdir(parents=True, exist_ok=True)
     TRACES_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Clean stale artifacts from previous targets.
+    # If the mapping references files from a different target, wipe everything
+    # so old specs don't pollute the violation count.
+    old_mapping = load_mapping()
+    if old_mapping.get("modules"):
+        old_paths = {m.get("code_path", "") for m in old_mapping["modules"]}
+        new_paths = {str(f.relative_to(target_dir)) for f in get_target_files(target_dir)}
+        if old_paths and not old_paths & new_paths:
+            print("  Detected target change -- cleaning stale specs and results")
+            import shutil
+            for f in SPECS_DIR.iterdir():
+                f.unlink()
+            if TRACES_DIR.exists():
+                shutil.rmtree(TRACES_DIR)
+                TRACES_DIR.mkdir(parents=True, exist_ok=True)
+            RESULTS_FILE.unlink(missing_ok=True)
+            (MAPPINGS_DIR / "mapping.json").unlink(missing_ok=True)
+            # Clean queue
+            for d in (QUEUE_REQUESTS, QUEUE_RESPONSES):
+                if d.exists():
+                    for f in d.iterdir():
+                        f.unlink()
 
     # Initialize results.tsv
     if not RESULTS_FILE.exists():
