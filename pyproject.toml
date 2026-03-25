@@ -14,7 +14,7 @@ dev = [
 ]
 
 [project.scripts]
-autospec = "autospec.__main__:main"
+autospec = "__main__:main"
 
 [build-system]
 requires = ["hatchling"]

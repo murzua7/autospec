@@ -23,8 +23,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import anthropic
-
 from prepare import (
     TLCResult,
     TSV_HEADER,
@@ -69,14 +67,14 @@ def load_mapping() -> dict[str, Any]:
     """Load the code->spec mapping from mappings/mapping.json."""
     path = MAPPINGS_DIR / "mapping.json"
     if path.exists():
-        return json.loads(path.read_text())
+        return json.loads(path.read_text(encoding="utf-8"))
     return {"modules": []}
 
 
 def save_mapping(mapping: dict[str, Any]) -> None:
     path = MAPPINGS_DIR / "mapping.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(mapping, indent=2))
+    path.write_text(json.dumps(mapping, indent=2), encoding="utf-8")
 
 
 def get_target_files(target_dir: Path) -> list[Path]:
@@ -161,7 +159,7 @@ def load_current_specs() -> dict[str, str]:
 def load_previous_results() -> list[str]:
     """Load results.tsv lines."""
     if RESULTS_FILE.exists():
-        lines = RESULTS_FILE.read_text().strip().split("\n")
+        lines = RESULTS_FILE.read_text(encoding="utf-8").strip().split("\n")
         return lines[1:] if len(lines) > 1 else []  # Skip header
     return []
 
@@ -170,7 +168,7 @@ def load_previous_results() -> list[str]:
 
 def build_system_prompt() -> str:
     """Build the system prompt from program.md."""
-    program = PROGRAM_FILE.read_text()
+    program = PROGRAM_FILE.read_text(encoding="utf-8")
     return textwrap.dedent(f"""\
         You are the autospec formal verification agent.
         Follow the instructions in program.md EXACTLY.
@@ -248,6 +246,8 @@ def _call_agent_api(
     model: str,
 ) -> dict[str, Any]:
     """Direct Anthropic API call (requires credits)."""
+    import anthropic
+
     client = anthropic.Anthropic()
 
     messages = [{"role": "user", "content": user_content}]
@@ -402,7 +402,7 @@ def apply_changes(agent_output: dict[str, Any]) -> list[str]:
             continue
 
         full_path.parent.mkdir(parents=True, exist_ok=True)
-        full_path.write_text(content)
+        full_path.write_text(content, encoding="utf-8")
         files_written.append(rel_path)
         print(f"  -> Wrote {rel_path} ({len(content)} chars)")
 
@@ -480,7 +480,7 @@ def evaluate_all_specs() -> tuple[int, list[TLCResult]]:
             continue
 
         # Anti-reward-hacking: verify cfg declares at least one INVARIANT
-        cfg_text = cfg_file.read_text()
+        cfg_text = cfg_file.read_text(encoding="utf-8")
         if "INVARIANT" not in cfg_text and "PROPERTY" not in cfg_text:
             total_violations += 1  # Penalize empty configs
             result = TLCResult(
@@ -521,6 +521,15 @@ def verify_evaluator_integrity() -> bool:
 
 # -- Main Loop ----------------------------------------------------------
 
+def _normalize_path(p: str | Path) -> Path:
+    """Normalize MSYS/Git Bash paths (/c/Users/...) to native Windows paths."""
+    s = str(p)
+    if sys.platform == "win32" and len(s) >= 3 and s[0] == "/" and s[2] == "/":
+        # /c/Users/... -> C:/Users/...
+        s = s[1].upper() + ":" + s[2:]
+    return Path(s)
+
+
 def run_loop(
     target_dir: str | Path,
     model: str = DEFAULT_MODEL,
@@ -538,7 +547,7 @@ def run_loop(
     5. Log to results.tsv
     6. NEVER STOP (until max_iterations)
     """
-    target_dir = Path(target_dir).resolve()
+    target_dir = _normalize_path(target_dir).resolve()
     if not target_dir.exists():
         print(f"Error: target directory not found: {target_dir}")
         sys.exit(1)
@@ -564,7 +573,7 @@ def run_loop(
 
     # Initialize results.tsv
     if not RESULTS_FILE.exists():
-        RESULTS_FILE.write_text(TSV_HEADER + "\n")
+        RESULTS_FILE.write_text(TSV_HEADER + "\n", encoding="utf-8")
 
     # Initialize mapping
     mapping = load_mapping()
@@ -597,7 +606,7 @@ def run_loop(
         "BASELINE",
         "Initial state",
     )
-    with open(RESULTS_FILE, "a") as f:
+    with open(RESULTS_FILE, "a", encoding="utf-8") as f:
         f.write(baseline_tsv + "\n")
 
     # -- Main Loop --------------------------------------------------
@@ -695,7 +704,7 @@ def run_loop(
                         }
                         for s in v.trace
                     ]
-                    trace_file.write_text(json.dumps(trace_data, indent=2))
+                    trace_file.write_text(json.dumps(trace_data, indent=2), encoding="utf-8")
 
         # -- Accept / Reject Gate ----------------------------------
         if current_violations == 0 and results:
@@ -732,7 +741,7 @@ def run_loop(
         # Log to results.tsv
         log_result = results[0] if results else TLCResult(spec_file="none", config_file="none")
         tsv_line = format_result_tsv(iteration, log_result, action, summary)
-        with open(RESULTS_FILE, "a") as f:
+        with open(RESULTS_FILE, "a", encoding="utf-8") as f:
             f.write(tsv_line + "\n")
 
         # Update mapping status

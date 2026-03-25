@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from autospec import run_loop
+from autospec import run_loop, _normalize_path
 
 
 def main() -> None:
@@ -73,7 +73,7 @@ def main() -> None:
         # Direct TLC check mode (no agent)
         from prepare import evaluate_spec_quality, format_result_for_agent, run_tlc
 
-        result = run_tlc(args.check)
+        result = run_tlc(str(_normalize_path(args.check)))
         print(format_result_for_agent(result))
         quality = evaluate_spec_quality(result, args.check)
         print(f"\nSpec Quality: {quality.invariant_count} invariants, "
@@ -89,7 +89,7 @@ def main() -> None:
         kwargs["model"] = args.model
 
     run_loop(
-        target_dir=args.target,
+        target_dir=str(_normalize_path(args.target)),
         **kwargs,
         max_iterations=args.max_iters,
         tag=args.tag,

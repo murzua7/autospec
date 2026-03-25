@@ -15,10 +15,16 @@ lib/tla2tools.jar
 # Run artifacts
 results.tsv
 traces/
+llm_queue/
+mappings/mapping.json
+templates/
 
 # Secrets
 .env
 *.key
+
+# Lock files
+uv.lock
 
 # OS
 .DS_Store

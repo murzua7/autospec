@@ -296,7 +296,6 @@ def parse_tlc_output(
         result.assertion_failures += 1
 
     # Deadlock
-    deadlock_pattern = r"(?:Error:\s*)?Temporal properties were violated|(?:Error:\s*)?Deadlock\s+reached"
     for m in re.finditer(r"(?:Error:\s*)?Deadlock\s+reached", raw):
         v = Violation(
             violation_type="deadlock",
@@ -381,7 +380,7 @@ def evaluate_spec_quality(result: TLCResult, spec_path: str | Path) -> SpecQuali
     analogous to val_bpb in autoresearch.
     """
     spec_path = Path(spec_path)
-    spec_text = spec_path.read_text() if spec_path.exists() else ""
+    spec_text = spec_path.read_text(encoding="utf-8") if spec_path.exists() else ""
 
     # Count invariants and temporal properties in the spec
     invariant_count = len(re.findall(
