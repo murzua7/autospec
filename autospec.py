@@ -533,6 +533,14 @@ def evaluate_all_specs() -> tuple[int, list[TLCResult]]:
         # Penalize trivial passes (0 states explored = empty/broken spec)
         if result.passed and result.distinct_states == 0:
             total_violations += 1
+        # A spec can fail without contributing a counted violation: TLC exits
+        # non-zero on a semantic error (undefined primed variable, unknown
+        # operator) while reporting no invariant violation and no parse error.
+        # Without this the loop scores such a spec as clean and accepts it.
+        if (not result.passed
+                and result.violation_count == 0
+                and not result.parse_errors):
+            total_violations += 1
         results.append(result)
 
     return total_violations, results

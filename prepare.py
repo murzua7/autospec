@@ -208,6 +208,24 @@ def run_tlc(
         result = parse_tlc_output(raw, str(spec_path), str(config_path))
         result.time_seconds = elapsed
         result.exit_code = proc.returncode
+        # TLC's exit code is the authority on whether the run completed. The
+        # parser above infers `passed` from counted violations, parse errors
+        # and a non-zero state count, and none of those catches a semantic
+        # failure such as "Successor state is not completely specified by
+        # action X" -- TLC exits 75, prints no invariant violation and no
+        # parse error, and still emits a statistics line, so the spec was
+        # reported as passing. Three specs did exactly that before this check
+        # existed. The exit code was already recorded on the line above and
+        # simply never consulted.
+        #
+        # This can only turn a pass into a failure, never the reverse.
+        if proc.returncode != 0 and result.passed:
+            result.passed = False
+            if not result.error_message:
+                result.error_message = (
+                    f"TLC exited {proc.returncode} without reporting a counted "
+                    f"violation or parse error -- the run did not complete."
+                )
         return result
     except subprocess.TimeoutExpired:
         elapsed = time.monotonic() - start
