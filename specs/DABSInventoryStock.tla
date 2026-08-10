@@ -138,7 +138,9 @@ Step(p, a, b, c, g) ==
            /\ inventory'  = inventory + p - x
            /\ cumProd'    = cumProd + p
            /\ cumSold'    = cumSold + x
-           /\ drewDown'   = drewDown \/ (x > p)
+           \* Bracketed: "=" binds tighter than "\/", so the unbracketed form
+           \* leaves drewDown' unconstrained whenever x > p.
+           /\ drewDown'   = (drewDown \/ (x > p))
 
 Done == /\ t = MaxSteps
         /\ UNCHANGED vars

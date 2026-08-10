@@ -74,7 +74,10 @@ Step(a, b, d) ==
        IN  /\ lastRaw'  = r
            /\ stock'    = stock + Max(r, 0)
            /\ stockRaw' = stockRaw + r
-           /\ escaped'  = escaped \/ (r < 0)
+           \* Bracketed: "=" binds tighter than "\/", so the unbracketed form
+           \* parses as (escaped' = escaped) \/ (r < 0) and leaves escaped'
+           \* unconstrained whenever r < 0.
+           /\ escaped'  = (escaped \/ (r < 0))
 
 Done == /\ t = MaxSteps
         /\ UNCHANGED vars

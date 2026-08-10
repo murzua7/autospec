@@ -88,8 +88,12 @@ Step(x, d) ==
            /\ lastOut'   = soft
            /\ hardStock' = hardStock + hard
            /\ softStock' = softStock + soft
-           /\ phantom'   = phantom \/ (x =< 0 /\ soft > 0)
-           /\ allNonPos' = allNonPos /\ (x =< 0)
+           \* Bracketed: "=" binds tighter than "\/" and "/\". Unbracketed,
+           \* the first leaves phantom' unconstrained (a TLC error) and the
+           \* second silently pins allNonPos' and gates the whole action on
+           \* x =< 0, shrinking the state space with no error at all.
+           /\ phantom'   = (phantom \/ (x =< 0 /\ soft > 0))
+           /\ allNonPos' = (allNonPos /\ (x =< 0))
 
 Done == /\ t = MaxSteps
         /\ UNCHANGED vars
