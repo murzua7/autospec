@@ -1,0 +1,134 @@
+==================================================
+  autospec -- Formal Verification
+  Self-Supervising TLA+ Verification Loop
+==================================================
+  Target:     C:\Users\matzua\AppData\Local\Temp\claude\C--Users-matzua\845f02ca-dd65-4808-b25d-faaf5e9b8200\scratchpad\wt_autospec\dabs
+  Mode:       queue
+  Model:      N/A (queue mode)
+  Max iters:  4
+  Evaluator:  prepare.py (SHA256: 496f058bf37f0f5b...)
+
+  Branch:     autospec/20260810-0948-dabs-final
+
+-- Baseline Evaluation --
+============================================================
+TLC RESULT: DABSAllocationExhaustive.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 3010 found, 409 distinct
+Time: 3.7s
+
+============================================================
+============================================================
+TLC RESULT: DABSDefaultLossConservation.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 2424 found, 891 distinct
+Time: 2.7s
+
+============================================================
+============================================================
+TLC RESULT: DABSGoodsRationing.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 56377 found, 9721 distinct
+Time: 3.0s
+
+============================================================
+============================================================
+TLC RESULT: DABSInventoryStock.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 11817 found, 636 distinct
+Time: 2.6s
+
+============================================================
+============================================================
+TLC RESULT: DABSMoneyEndogenous.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 58966 found, 14571 distinct
+Time: 2.7s
+
+============================================================
+============================================================
+TLC RESULT: DABSSFCBalance.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 2108 found, 716 distinct
+Time: 2.7s
+
+============================================================
+============================================================
+TLC RESULT: DABSSmoothMinEscape.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 415 found, 57 distinct
+Time: 3.2s
+
+============================================================
+============================================================
+TLC RESULT: DABSSmoothReluPhantom.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 882 found, 242 distinct
+Time: 5.1s
+
+============================================================
+
+------------------------------------------------------------
+  Iteration 1/4
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 93e6a680-be0.json
+  [queue] Waiting for response at: 93e6a680-be0.json
+  [queue] (Run /autospec-respond or process the queue externally)

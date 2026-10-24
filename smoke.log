@@ -1,0 +1,42 @@
+==================================================
+  autospec -- Formal Verification
+  Self-Supervising TLA+ Verification Loop
+==================================================
+  Target:     C:\Users\matzua\AppData\Local\Temp\claude\C--Users-matzua\845f02ca-dd65-4808-b25d-faaf5e9b8200\scratchpad\wt_autospec\dabs
+  Mode:       queue
+  Model:      N/A (queue mode)
+  Max iters:  1
+  Evaluator:  prepare.py (SHA256: 496f058bf37f0f5b...)
+
+  Branch:     autospec/20260810-0259-smoke2
+
+-- Baseline Evaluation --
+  No specs yet -- agent will create the first one.
+
+------------------------------------------------------------
+  Iteration 1/1
+  Best violations: -1
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 73893b58-729.json
+  [queue] Waiting for response at: 73893b58-729.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  [queue] Still waiting... (150s)
+  Classification: NEW_SPEC
+  Summary: SMOOTH-1 [NEW] first iteration. No spec in specs/ covers the LogSumExp undershoot, so wrote DABSSmoothMinEscape: models smooth_min as exact-min-minus-bounded-gap and contrasts the clamped accumulator against the unclamped one that the two live defects use. Remaining checklist items untouched.
+  -> Wrote specs/DABSSmoothMinEscape.tla (4714 chars)
+  -> Wrote specs/DABSSmoothMinEscape.cfg (240 chars)
+  Running TLC model checker...
+  DABSSmoothMinEscape.tla: PASS OK (37 states, 12.2s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+============================================================
+  autospec completed after 1 iterations
+  Final violations: 0
+  Branch: autospec/20260810-0259-smoke2
+  Results: C:\Users\matzua\Desktop\Repos\autospec\results.tsv
+============================================================

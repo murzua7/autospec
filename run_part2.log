@@ -1,0 +1,241 @@
+==================================================
+  autospec -- Formal Verification
+  Self-Supervising TLA+ Verification Loop
+==================================================
+  Target:     C:\Users\matzua\AppData\Local\Temp\claude\C--Users-matzua\845f02ca-dd65-4808-b25d-faaf5e9b8200\scratchpad\wt_autospec\dabs
+  Mode:       queue
+  Model:      N/A (queue mode)
+  Max iters:  10
+  Evaluator:  prepare.py (SHA256: 496f058bf37f0f5b...)
+
+  Branch:     autospec/20260810-0914-dabs-part2
+
+-- Baseline Evaluation --
+============================================================
+TLC RESULT: DABSAllocationExhaustive.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 3010 found, 409 distinct
+Time: 2.8s
+
+============================================================
+============================================================
+TLC RESULT: DABSGoodsRationing.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 56377 found, 9721 distinct
+Time: 4.3s
+
+============================================================
+============================================================
+TLC RESULT: DABSInventoryStock.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 11817 found, 636 distinct
+Time: 3.0s
+
+============================================================
+============================================================
+TLC RESULT: DABSSmoothMinEscape.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 415 found, 57 distinct
+Time: 2.2s
+
+============================================================
+============================================================
+TLC RESULT: DABSSmoothReluPhantom.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 882 found, 242 distinct
+Time: 1.9s
+
+============================================================
+
+------------------------------------------------------------
+  Iteration 1/10
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 9e6effba-a72.json
+  [queue] Waiting for response at: 9e6effba-a72.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  [queue] Still waiting... (150s)
+  [queue] Still waiting... (180s)
+  [queue] Still waiting... (210s)
+  [queue] Still waiting... (240s)
+  [queue] Still waiting... (270s)
+  [queue] Still waiting... (300s)
+  [queue] Still waiting... (330s)
+  Classification: NEW_SPEC
+  Summary: SFC-1 [NEW]. Checked specs/ first: DABSSmoothMinEscape covers SMOOTH-1, DABSSmoothReluPhantom covers SMOOTH-2, DABSGoodsRationing covers CLEAR-1, DABSInventoryStock covers INV-1, DABSAllocationExhaustive covers ALLOC-1. None of the five touches the financial side at all — every one of them models goods, rates or shares, and not a single one carries a bank ledger, a sector deposit holding or an equity account — so SFC-1 is genuinely uncovered. Wrote DABSSFCBalance: three sectors plus a bank, with the BANK's own deposit and loan ledgers advanced by the bank leg of each posting and the SECTOR ledgers advanced by the sector leg, never derived from one another. Equity is an INDEPENDENT variable moved only by the postings that touch it (interest booked to capital, write-offs absorbed by capital), so the closure identity loans + bonds = deposits + equity is a real constraint rather than a recomputed tautology. Six paired double-entry postings drive the economy: lending, repayment, settlement, interest to capital, bond purchase, loan write-off. Asserts both mirror identities, balance-sheet closure, bonds held equal bonds issued, non-negative sector stocks, and the loan stock reconstructed from its three flows. The falsifiable bite is a shadow deposit ledger that posts the CREDIT leg of a settlement and forgets the DEBIT leg — the one-sided scatter-add — pinned to overcount by exactly the transferred amount and to break closure the moment any settlement happens. SMOOTH-1 [COVERED] by DABSSmoothMinEscape, SMOOTH-2 [COVERED] by DABSSmoothReluPhantom, CLEAR-1 [COVERED] by DABSGoodsRationing, INV-1 [COVERED] by DABSInventoryStock, ALLOC-1 [COVERED] by DABSAllocationExhaustive. Remaining checklist items (MONEY-1, DEF-1, SCHED-1, PARAM-1) untouched.
+  -> Wrote specs/DABSSFCBalance.tla (12127 chars)
+  -> Wrote specs/DABSSFCBalance.cfg (503 chars)
+  Running TLC model checker...
+  DABSAllocationExhaustive.tla: PASS OK (409 states, 1.9s)
+  DABSGoodsRationing.tla: PASS OK (9721 states, 2.9s)
+  DABSInventoryStock.tla: PASS OK (636 states, 2.6s)
+  DABSSFCBalance.tla: PASS OK (716 states, 2.0s)
+  DABSSmoothMinEscape.tla: PASS OK (57 states, 1.4s)
+  DABSSmoothReluPhantom.tla: PASS OK (242 states, 1.6s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+------------------------------------------------------------
+  Iteration 2/10
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 00f0e848-8f2.json
+  [queue] Waiting for response at: 00f0e848-8f2.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  Classification: NEW_SPEC
+  Summary: MONEY-1 [NEW]. Checked specs/ first: DABSSmoothMinEscape covers SMOOTH-1, DABSSmoothReluPhantom covers SMOOTH-2, DABSGoodsRationing covers CLEAR-1, DABSInventoryStock covers INV-1, DABSAllocationExhaustive covers ALLOC-1, DABSSFCBalance covers SFC-1. The only spec anywhere near the financial side is DABSSFCBalance, and it explicitly declines MONEY-1 in its own scope note: it asserts the bank's balance-sheet CLOSURE (loans + bonds = deposits + equity) over ALL postings including interest and write-offs, which is a different identity from the narrower endogenous-money one, and it never partitions postings into money-creating and money-neutral classes at all. So MONEY-1 is genuinely uncovered. Wrote DABSMoneyEndogenous: the deposit stock is carried as an INDEPENDENT variable advanced by each posting's own deposit leg, never recomputed from loans, and every posting is tagged by the class the code puts it in — CREATE (bank lending), DESTROY (repayment), NEUTRAL (goods settlement, wage payment, tax, transfer, interest paid out of deposits, bond purchase from an existing holder). Asserts the endogenous-money identity total_deposits - outstanding_loans = base in every reachable state, that neutral postings leave the deposit aggregate EXACTLY unchanged while genuinely relocating it between sectors, that creation and destruction move deposits and loans one-for-one together, and that the deposit stock reconstructs exactly from its two flows. The falsifiable bite is a shadow ledger in which goods settlement is routed through the credit path — the phase-ordering fault where a settlement is booked as a fresh drawdown instead of a transfer — pinned to inflate the money stock by exactly the settled volume and to break the identity the moment any trade happens; plus a second shadow in which repayment cancels the loan but never debits the deposit, the one-sided destruction that leaves money outstanding against no asset. SMOOTH-1 [COVERED] by DABSSmoothMinEscape, SMOOTH-2 [COVERED] by DABSSmoothReluPhantom, CLEAR-1 [COVERED] by DABSGoodsRationing, INV-1 [COVERED] by DABSInventoryStock, ALLOC-1 [COVERED] by DABSAllocationExhaustive, SFC-1 [COVERED] by DABSSFCBalance. Remaining checklist items (DEF-1, SCHED-1, PARAM-1) untouched.
+  -> Wrote specs/DABSMoneyEndogenous.tla (13537 chars)
+  -> Wrote specs/DABSMoneyEndogenous.cfg (767 chars)
+  Running TLC model checker...
+  DABSAllocationExhaustive.tla: PASS OK (409 states, 1.8s)
+  DABSGoodsRationing.tla: PASS OK (9721 states, 2.3s)
+  DABSInventoryStock.tla: PASS OK (636 states, 2.1s)
+  DABSMoneyEndogenous.tla: PASS OK (14571 states, 2.6s)
+  DABSSFCBalance.tla: PASS OK (716 states, 2.2s)
+  DABSSmoothMinEscape.tla: PASS OK (57 states, 1.6s)
+  DABSSmoothReluPhantom.tla: PASS OK (242 states, 1.5s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+------------------------------------------------------------
+  Iteration 3/10
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 07cdc01c-b20.json
+  [queue] Waiting for response at: 07cdc01c-b20.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  [queue] Still waiting... (150s)
+  [queue] Still waiting... (180s)
+  [queue] Still waiting... (210s)
+  [queue] Still waiting... (240s)
+  [queue] Still waiting... (270s)
+  [queue] Still waiting... (300s)
+  [queue] Still waiting... (330s)
+  [queue] Still waiting... (360s)
+  Classification: NEW_SPEC
+  Summary: DEF-1 [NEW]. Checked specs/ first: DABSSmoothMinEscape covers SMOOTH-1, DABSSmoothReluPhantom covers SMOOTH-2, DABSGoodsRationing covers CLEAR-1, DABSInventoryStock covers INV-1, DABSAllocationExhaustive covers ALLOC-1, DABSSFCBalance covers SFC-1, DABSMoneyEndogenous covers MONEY-1. The two financial specs are the only candidates and neither covers DEF-1: DABSSFCBalance has a WriteOff posting but it is a bare principal cancellation with no seized-deposit recovery, no partition of the unpaid claim into recovery and loss, and no exit-rate cap at all; DABSMoneyEndogenous explicitly EXCLUDES write-offs from its scope because they break the narrower money identity. Neither carries a firm population, a liveness flag, or a per-quarter exit budget. So DEF-1 is genuinely uncovered. Wrote DABSDefaultLossConservation: a three-firm population with per-firm debt and deposit ledgers, a bank whose loan asset, deposit liability and capital are posted INDEPENDENTLY (never recomputed as assets minus liabilities), and a quarterly insolvency wave in which a DESIRED exit set from compute_default is filtered through the cap into a REALISED exit set. Each exit splits the unpaid claim exactly: recovery is the seized firm deposit capped at the claim, loss is the remainder, the bank asset is written down by the WHOLE claim while the deposit liability falls by the recovery and capital absorbs only the loss. Asserts loss conservation both per wave and cumulatively (recovery + loss = claim exactly, so no value is created or destroyed by an exit), recovery bounded by what the firm actually held, the realised exit rate within the cap against the ALIVE denominator, the cap binding exactly when desire exceeds it, deferral conserved as a residual, both ledger mirrors, balance-sheet closure in every reachable state, the loan stock and the capital stock reconstructed from their flows, dead firms holding no debt, and the population count reconciling against the exit counter. Two shadow ledgers give it the falsifiable bite: one debits capital by the full claim while still crediting the recovery, the double-count that destroys the recovered value twice, pinned to sit exactly cumRecovery below the true capital and to break closure the moment anything is recovered; the other cancels the firm's debt without writing down the bank asset, the one-sided write-off that leaves the bank carrying claims against firms that no longer exist, pinned to exceed the true loan stock by exactly everything ever written off. SMOOTH-1 [COVERED] by DABSSmoothMinEscape, SMOOTH-2 [COVERED] by DABSSmoothReluPhantom, CLEAR-1 [COVERED] by DABSGoodsRationing, INV-1 [COVERED] by DABSInventoryStock, ALLOC-1 [COVERED] by DABSAllocationExhaustive, SFC-1 [COVERED] by DABSSFCBalance, MONEY-1 [COVERED] by DABSMoneyEndogenous. Remaining checklist items (SCHED-1, PARAM-1) untouched.
+  -> Wrote specs/DABSDefaultLossConservation.tla (19141 chars)
+  -> Wrote specs/DABSDefaultLossConservation.cfg (1098 chars)
+  Running TLC model checker...
+  DABSAllocationExhaustive.tla: PASS OK (409 states, 2.8s)
+  DABSDefaultLossConservation.tla: PASS OK (891 states, 2.8s)
+  DABSGoodsRationing.tla: PASS OK (9721 states, 2.5s)
+  DABSInventoryStock.tla: PASS OK (636 states, 1.9s)
+  DABSMoneyEndogenous.tla: PASS OK (14571 states, 2.5s)
+  DABSSFCBalance.tla: PASS OK (716 states, 1.5s)
+  DABSSmoothMinEscape.tla: PASS OK (57 states, 1.6s)
+  DABSSmoothReluPhantom.tla: PASS OK (242 states, 1.5s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+------------------------------------------------------------
+  Iteration 4/10
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: f9c9048b-588.json
+  [queue] Waiting for response at: f9c9048b-588.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  [queue] Still waiting... (150s)
+  [queue] Still waiting... (180s)
+  [queue] Still waiting... (210s)
+  [queue] Still waiting... (240s)
+  [queue] Still waiting... (270s)
+  [queue] Still waiting... (300s)
+  [queue] Still waiting... (330s)
+  [queue] Still waiting... (360s)
+  [queue] Still waiting... (390s)
+  [queue] Still waiting... (420s)
+  [queue] Still waiting... (450s)
+  [queue] Still waiting... (480s)
+  [queue] Still waiting... (510s)
+  [queue] Still waiting... (540s)
+  [queue] Still waiting... (570s)
+  Classification: NEW_SPEC
+  Summary: SCHED-1 [NEW]. Checked specs/ first: DABSSmoothMinEscape covers SMOOTH-1, DABSSmoothReluPhantom covers SMOOTH-2, DABSGoodsRationing covers CLEAR-1, DABSInventoryStock covers INV-1, DABSAllocationExhaustive covers ALLOC-1, DABSSFCBalance covers SFC-1, DABSMoneyEndogenous covers MONEY-1, DABSDefaultLossConservation covers DEF-1. Not one of the eight carries a phase, an execution order, or a per-step run counter — every one of them models the CONTENT of a single phase (a smooth operator, a clearing, a stock, an allocation, a posting set, a monetary partition, an insolvency wave) and none models the SEQUENCE in which the phases run. SCHED-1 is genuinely uncovered. Wrote DABSStepOrdering: the step loop as an explicit scheduler over the twelve named phases, with a fixed prefix (exchange estimation, targets, labour), a config-dependent middle block that admits ALL THREE orderings of monetary/credit/production/pricing/housing as a nondeterministic choice, and a fixed suffix (goods trade, balance sheets, government, insolvency, capital, aggregation). Each phase carries a run counter and a within-step position, and the economy carries real state — output produced by production, matched volume by goods trade, a posted balance sheet, a write-off by insolvency — so the ordering preconditions bite on data rather than on labels. Asserts the four preconditions that must hold under EVERY one of the three orderings: production precedes goods trade, goods trade precedes balance sheets, balance sheets precede insolvency, aggregation is last; plus each phase runs at most once per step and exactly once per completed step, the prefix and suffix positions are pinned, and the middle block is a genuine permutation of the five reorderable phases. The falsifiable bite is two shadow schedules run alongside: one that settles goods trade before production has run, pinned to book matched volume against output that does not yet exist, and one that posts the balance sheet before goods trade, pinned to carry a balance sheet that omits exactly the quarter's unrecorded trade. Both are constructed to break the corresponding precondition the moment the economy does anything. SMOOTH-1 [COVERED] by DABSSmoothMinEscape, SMOOTH-2 [COVERED] by DABSSmoothReluPhantom, CLEAR-1 [COVERED] by DABSGoodsRationing, INV-1 [COVERED] by DABSInventoryStock, ALLOC-1 [COVERED] by DABSAllocationExhaustive, SFC-1 [COVERED] by DABSSFCBalance, MONEY-1 [COVERED] by DABSMoneyEndogenous, DEF-1 [COVERED] by DABSDefaultLossConservation. Remaining checklist item (PARAM-1) untouched.
+  -> Wrote specs/DABSStepOrdering.tla (9643 chars)
+  -> Wrote specs/DABSStepOrdering.cfg (80 chars)
+  Running TLC model checker...
+  DABSAllocationExhaustive.tla: PASS OK (409 states, 1.5s)
+  DABSDefaultLossConservation.tla: PASS OK (891 states, 1.9s)
+  DABSGoodsRationing.tla: PASS OK (9721 states, 2.7s)
+  DABSInventoryStock.tla: PASS OK (636 states, 1.6s)
+  DABSMoneyEndogenous.tla: PASS OK (14571 states, 2.0s)
+  DABSSFCBalance.tla: PASS OK (716 states, 1.5s)
+  DABSSmoothMinEscape.tla: PASS OK (57 states, 1.5s)
+  DABSSmoothReluPhantom.tla: PASS OK (242 states, 1.4s)
+  DABSStepOrdering.tla: FAIL FAIL (0 violations) (0 states, 1.7s)
+  FAIL Regressed: 0 -> 3 violations
+    Reverting commit...
+
+------------------------------------------------------------
+  Iteration 5/10
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: dec87096-1d1.json
+  [queue] Waiting for response at: dec87096-1d1.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  [queue] Still waiting... (150s)
+  [queue] Still waiting... (180s)
+  [queue] Still waiting... (210s)
+  [queue] Still waiting... (240s)
+  [queue] Still waiting... (270s)
+  [queue] Still waiting... (300s)
+  [queue] Still waiting... (330s)
+  [queue] Still waiting... (360s)

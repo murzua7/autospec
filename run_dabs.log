@@ -1,0 +1,134 @@
+==================================================
+  autospec -- Formal Verification
+  Self-Supervising TLA+ Verification Loop
+==================================================
+  Target:     C:\Users\matzua\AppData\Local\Temp\claude\C--Users-matzua\845f02ca-dd65-4808-b25d-faaf5e9b8200\scratchpad\wt_autospec\dabs
+  Mode:       queue
+  Model:      N/A (queue mode)
+  Max iters:  18
+  Evaluator:  prepare.py (SHA256: 496f058bf37f0f5b...)
+
+  Branch:     autospec/20260810-0304-dabs-e6daf7c
+
+-- Baseline Evaluation --
+============================================================
+TLC RESULT: DABSSmoothMinEscape.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 141 found, 41 distinct
+Time: 1.8s
+
+============================================================
+
+------------------------------------------------------------
+  Iteration 1/18
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: e3bf0544-f05.json
+  [queue] Waiting for response at: e3bf0544-f05.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  Classification: NEW_SPEC
+  Summary: SMOOTH-2 [NEW]. Checked specs/ first: the only existing spec, DABSSmoothMinEscape, covers SMOOTH-1 (LogSumExp UNDERSHOOT, negative mass escaping an unclamped accumulator). It says nothing about the mirror defect, so SMOOTH-2 is genuinely uncovered. Wrote DABSSmoothReluPhantom: models softplus as exact-relu-plus-bounded-gap and runs the hard-floor accumulator alongside the softplus one over a rollout, pinning the phantom to one gap per application and showing a quantity that must be exactly zero cannot be produced by the smooth path. SMOOTH-1 [COVERED] by DABSSmoothMinEscape. Remaining checklist items (CLEAR-1, INV-1, ALLOC-1, SFC-1, MONEY-1, DEF-1, SCHED-1, PARAM-1) untouched.
+  -> Wrote specs/DABSSmoothReluPhantom.tla (5884 chars)
+  -> Wrote specs/DABSSmoothReluPhantom.cfg (358 chars)
+  Running TLC model checker...
+  DABSSmoothMinEscape.tla: PASS OK (17 states, 39.3s)
+  DABSSmoothReluPhantom.tla: FAIL FAIL (0 violations) (0 states, 0.0s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+------------------------------------------------------------
+  Iteration 2/18
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 7cbefd71-e2e.json
+  [queue] Waiting for response at: 7cbefd71-e2e.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  [queue] Still waiting... (150s)
+  [queue] Still waiting... (180s)
+  [queue] Still waiting... (210s)
+  [queue] Still waiting... (240s)
+  Classification: NEW_SPEC
+  Summary: CLEAR-1 [NEW]. Checked specs/ first: DABSSmoothMinEscape covers SMOOTH-1 and DABSSmoothReluPhantom covers SMOOTH-2; neither says anything about goods-market clearing, so CLEAR-1 is genuinely uncovered. Wrote DABSGoodsRationing: carries the fill rate as a numerator over a fixed denominator, models smooth_min as exact-minus-bounded-gap, allocates to all three buyer classes pro rata with floor division, and runs a two-step rollout with cumulative supply/sold/demand/unmet accumulators. Asserts no goods created (per step and cumulatively), no class filled above its demand, every class pinned to the SAME rate within one rounding unit, unmet demand conserved as a residual, and the phantom-rationing consequence of the undershoot: with supply ample and any gap at all, realised purchases are STRICTLY below demand. SMOOTH-1 [COVERED] by DABSSmoothMinEscape, SMOOTH-2 [COVERED] by DABSSmoothReluPhantom. Remaining checklist items (INV-1, ALLOC-1, SFC-1, MONEY-1, DEF-1, SCHED-1, PARAM-1) untouched.
+  -> Wrote specs/DABSGoodsRationing.tla (8481 chars)
+  -> Wrote specs/DABSGoodsRationing.cfg (473 chars)
+  Running TLC model checker...
+  DABSGoodsRationing.tla: PASS OK (9721 states, 4.0s)
+  DABSSmoothMinEscape.tla: PASS OK (41 states, 3.5s)
+  DABSSmoothReluPhantom.tla: PASS OK (9 states, 5.0s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+------------------------------------------------------------
+  Iteration 3/18
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 8e6b9b22-9a4.json
+  [queue] Waiting for response at: 8e6b9b22-9a4.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  Classification: NEW_SPEC
+  Summary: INV-1 [NEW]. Checked specs/ first: DABSSmoothMinEscape covers SMOOTH-1, DABSSmoothReluPhantom covers SMOOTH-2, DABSGoodsRationing covers CLEAR-1. None of the three says anything about the inventory stock recursion — DABSGoodsRationing models a single clearing's flows with no carried stock at all — so INV-1 is genuinely uncovered. Wrote DABSInventoryStock: models inventory = prev_inventory + production - total_sold as a real stock recursion over a rollout, with available supply for a clearing being carried inventory PLUS current production, the fill rate carried as a numerator over a fixed denominator, and smooth_min modelled as exact-minus-bounded-gap. Asserts the stock never goes negative, the recursion closes against cumulative production and sales (nothing sold that was never produced or held), nothing is sold that was not available, inventory never exceeds everything ever produced, and — the falsifiable bite — that a clearing which sized the fill rate against production ALONE while settling against the carried buffer would break the non-negativity. Also pins the buffer-drawdown case: when demand exceeds production the stock must strictly fall, so the recursion cannot silently manufacture the buffer it sells from. SMOOTH-1 [COVERED] by DABSSmoothMinEscape, SMOOTH-2 [COVERED] by DABSSmoothReluPhantom, CLEAR-1 [COVERED] by DABSGoodsRationing. Remaining checklist items (ALLOC-1, SFC-1, MONEY-1, DEF-1, SCHED-1, PARAM-1) untouched.
+  -> Wrote specs/DABSInventoryStock.tla (8761 chars)
+  -> Wrote specs/DABSInventoryStock.cfg (393 chars)
+  Running TLC model checker...
+  DABSGoodsRationing.tla: PASS OK (9721 states, 11.1s)
+  DABSInventoryStock.tla: PASS OK (235 states, 12.0s)
+  DABSSmoothMinEscape.tla: PASS OK (5 states, 14.2s)
+  DABSSmoothReluPhantom.tla: PASS OK (17 states, 2.2s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+------------------------------------------------------------
+  Iteration 4/18
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: c9494fa0-832.json
+  [queue] Waiting for response at: c9494fa0-832.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  Classification: NEW_SPEC
+  Summary: ALLOC-1 [NEW]. Checked specs/ first: DABSSmoothMinEscape covers SMOOTH-1, DABSSmoothReluPhantom covers SMOOTH-2, DABSGoodsRationing covers CLEAR-1, DABSInventoryStock covers INV-1. None of the four says anything about softmax_allocation — DABSGoodsRationing is a pro-rata rationing of a supply CEILING (a min against 1, where under-delivery is correct behaviour), whereas softmax_allocation is an exhaustive SPLIT of a fixed total across slots (where under-delivery is mass loss), so ALLOC-1 is genuinely uncovered. Wrote DABSAllocationExhaustive: models total * softmax(scores/tau) as an integer split with a largest-remainder settlement of the rounding residue, over a rollout of repeated allocations with a cumulative dispatched/received ledger. Asserts the shares sum to total EXACTLY (not merely within tolerance), every share is non-negative, no slot exceeds total, the softmax ordering is respected (a higher score never receives strictly less), the temperature limits are pinned (as tau grows the split flattens; as tau shrinks it concentrates on the argmax), and the falsifiable bite: a naive floor-division allocation that skips the residue settlement leaks up to NumSlots-1 units per call, which the spec exhibits as a strictly positive cumulative leak while the settled path stays exactly closed. SMOOTH-1 [COVERED] by DABSSmoothMinEscape, SMOOTH-2 [COVERED] by DABSSmoothReluPhantom, CLEAR-1 [COVERED] by DABSGoodsRationing, INV-1 [COVERED] by DABSInventoryStock. Remaining checklist items (SFC-1, MONEY-1, DEF-1, SCHED-1, PARAM-1) untouched.
+  -> Wrote specs/DABSAllocationExhaustive.tla (10127 chars)
+  -> Wrote specs/DABSAllocationExhaustive.cfg (425 chars)
+Traceback (most recent call last):
+  File "C:\Users\matzua\Desktop\Repos\autospec\__main__.py", line 101, in <module>
+    main()
+  File "C:\Users\matzua\Desktop\Repos\autospec\__main__.py", line 91, in main
+    run_loop(
+  File "C:\Users\matzua\Desktop\Repos\autospec\autospec.py", line 724, in run_loop
+    committed = commit_changes(commit_msg, files_written)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\matzua\Desktop\Repos\autospec\autospec.py", line 483, in commit_changes
+    git("add", f)
+  File "C:\Users\matzua\Desktop\Repos\autospec\autospec.py", line 450, in git
+    return subprocess.run(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\matzua\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\matzua\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\matzua\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\subprocess.py", line 1630, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['git', 'add', 'specs/DABSAllocationExhaustive.cfg']' timed out after 30 seconds

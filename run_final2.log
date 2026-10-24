@@ -1,0 +1,188 @@
+==================================================
+  autospec -- Formal Verification
+  Self-Supervising TLA+ Verification Loop
+==================================================
+  Target:     C:\Users\matzua\AppData\Local\Temp\claude\C--Users-matzua\845f02ca-dd65-4808-b25d-faaf5e9b8200\scratchpad\wt_autospec\dabs
+  Mode:       queue
+  Model:      N/A (queue mode)
+  Max iters:  2
+  Evaluator:  prepare.py (SHA256: 496f058bf37f0f5b...)
+
+  Branch:     autospec/20260810-0951-dabs-sched
+
+-- Baseline Evaluation --
+============================================================
+TLC RESULT: DABSAllocationExhaustive.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 3010 found, 409 distinct
+Time: 4.0s
+
+============================================================
+============================================================
+TLC RESULT: DABSDefaultLossConservation.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 2424 found, 891 distinct
+Time: 3.9s
+
+============================================================
+============================================================
+TLC RESULT: DABSGoodsRationing.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 56377 found, 9721 distinct
+Time: 7.8s
+
+============================================================
+============================================================
+TLC RESULT: DABSInventoryStock.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 11817 found, 636 distinct
+Time: 3.7s
+
+============================================================
+============================================================
+TLC RESULT: DABSMoneyEndogenous.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 58966 found, 14571 distinct
+Time: 5.5s
+
+============================================================
+============================================================
+TLC RESULT: DABSSFCBalance.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 2108 found, 716 distinct
+Time: 4.3s
+
+============================================================
+============================================================
+TLC RESULT: DABSSmoothMinEscape.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 415 found, 57 distinct
+Time: 5.2s
+
+============================================================
+============================================================
+TLC RESULT: DABSSmoothReluPhantom.tla
+============================================================
+
+Passed: YES OK
+Violations: 0
+  Invariant: 0
+  Deadlock:  0
+  Liveness:  0
+  Assertion: 0
+States: 882 found, 242 distinct
+Time: 2.5s
+
+============================================================
+
+------------------------------------------------------------
+  Iteration 1/2
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 1e3c214c-48c.json
+  [queue] Waiting for response at: 1e3c214c-48c.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  Classification: NEW_SPEC
+  Summary: SCHED-1 [NEW]. Checked specs/ first: SMOOTH-1/2, CLEAR-1, INV-1, ALLOC-1, SFC-1, MONEY-1 and DEF-1 are covered, and not one of the eight models the step SCHEDULE - they model single computations and accounting closures, never the sequencing protocol that orders them. Wrote DABSStepOrdering: fixed prefix (exchange_estimation, targets, labour), config-dependent middle block (monetary, credit, production, pricing, housing) modelled as a FREE interleaving subject only to the dependencies the code enforces, fixed suffix (goods_trade, balance_sheets, government, insolvency, capital, aggregation). Free interleaving is a sound over-approximation of all three concrete orderings. Asserts production before trade, pricing after production, trade before balance sheets (settlement never precedes clearing), balance sheets before insolvency, government before insolvency, aggregation only on a complete step, dependency closure, and at-most-once dispatch. PARAM-1 remains.
+  -> Wrote specs/DABSStepOrdering.tla (5317 chars)
+  -> Wrote specs/DABSStepOrdering.cfg (346 chars)
+  Running TLC model checker...
+  DABSAllocationExhaustive.tla: PASS OK (409 states, 2.1s)
+  DABSDefaultLossConservation.tla: PASS OK (891 states, 2.8s)
+  DABSGoodsRationing.tla: PASS OK (9721 states, 3.7s)
+  DABSInventoryStock.tla: PASS OK (636 states, 2.9s)
+  DABSMoneyEndogenous.tla: PASS OK (14571 states, 4.5s)
+  DABSSFCBalance.tla: PASS OK (716 states, 3.2s)
+  DABSSmoothMinEscape.tla: PASS OK (57 states, 2.7s)
+  DABSSmoothReluPhantom.tla: PASS OK (242 states, 3.5s)
+  DABSStepOrdering.tla: PASS OK (99 states, 4.6s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+------------------------------------------------------------
+  Iteration 2/2
+  Best violations: 0
+------------------------------------------------------------
+  Calling agent...
+  [queue] Request written: 91db83d7-a4b.json
+  [queue] Waiting for response at: 91db83d7-a4b.json
+  [queue] (Run /autospec-respond or process the queue externally)
+  [queue] Still waiting... (30s)
+  [queue] Still waiting... (60s)
+  [queue] Still waiting... (90s)
+  [queue] Still waiting... (120s)
+  Classification: NEW_SPEC
+  Summary: PARAM-1 [NEW]. Checked specs/ first: all nine existing specs model economic quantities - operators, market clearing, stocks, allocation, sectoral balance, money, default, scheduling. Not one touches the CONFIGURATION surface, so PARAM-1 is genuinely uncovered. Wrote DABSConstrainedParam: two parameters, one enrolled (the firm_wage_markup case, the sole member of _SOFTPLUS_CONSTRAINED) and one plain (every other trainable coefficient at this commit, since _SIGMOID_CONSTRAINED is empty), with the two write paths modelled separately. set_constrained inverts the transform and lands; a direct .data assignment on an enrolled name writes into the tensor the property just computed and returned, which nothing retains, so it is discarded with no exception. A shadow ledger carries what the caller BELIEVES it applied, in the same idiom the accounting specs use. CHECKLIST COMPLETE after this: all ten items covered.
+  -> Wrote specs/DABSConstrainedParam.tla (6581 chars)
+  -> Wrote specs/DABSConstrainedParam.cfg (205 chars)
+  Running TLC model checker...
+  DABSAllocationExhaustive.tla: PASS OK (409 states, 2.5s)
+  DABSConstrainedParam.tla: PASS OK (96 states, 3.0s)
+  DABSDefaultLossConservation.tla: PASS OK (891 states, 4.2s)
+  DABSGoodsRationing.tla: PASS OK (9721 states, 4.0s)
+  DABSInventoryStock.tla: PASS OK (636 states, 3.3s)
+  DABSMoneyEndogenous.tla: PASS OK (14571 states, 3.9s)
+  DABSSFCBalance.tla: PASS OK (716 states, 3.5s)
+  DABSSmoothMinEscape.tla: PASS OK (57 states, 3.7s)
+  DABSSmoothReluPhantom.tla: PASS OK (242 states, 3.0s)
+  DABSStepOrdering.tla: PASS OK (99 states, 2.7s)
+  * ZERO VIOLATIONS -- all specs verified!
+
+============================================================
+  autospec completed after 2 iterations
+  Final violations: 0
+  Branch: autospec/20260810-0951-dabs-sched
+  Results: C:\Users\matzua\Desktop\Repos\autospec\results.tsv
+============================================================
